@@ -99,66 +99,88 @@ void findAndAttachProcess() {
   }
 }
 
-namespace GameMemory {
-    uint32_t getRealPtr(uint32_t address) {
-      uint32_t masked = address & 0x7FFFFFFF;
-      if (masked > 0x1800000) {
-        return 0;
-      }
-      return masked;
-    }
-
-    uint32_t read_u32(uint32_t address) {
-      if (!emuRAMAddressStart)
-        return 0;
-
-      uint32_t res = 0;
-      SIZE_T read = 0;
-      if (ReadProcessMemory(dolphinProcHandle, reinterpret_cast<void*>(emuRAMAddressStart + getRealPtr(address)), &res, 4, &read) == 0) {
-        cerr << "Failed to read memory from" << address << ". Error: " << GetLastError() << endl;
-        return 0;
-      }
-
-      if (read != 4) {
-        return 0;
-      } else {
-        return beToHost32(res);
-      }
-    }
-
-    uint64_t read_u64(uint32_t address) {
-      if (!emuRAMAddressStart)
-        return 0;
-
-      uint64_t res = 0;
-      SIZE_T read = 0;
-      if (ReadProcessMemory(dolphinProcHandle, reinterpret_cast<void*>(emuRAMAddressStart + getRealPtr(address)), &res, 8, &read) == 0) {
-        cerr << "Failed to read memory from" << address << ". Error: " << GetLastError() << endl;
-        return 0;
-      }
-
-      if (read != 8) {
-        return 0;
-      } else {
-        return beToHost64(res);
-      }
-    }
-
-    float read_float(uint32_t address) {
-      union {
-          uint32_t i;
-          float f;
-      } u;
-      u.i = read_u32(address);
-      return u.f;
-    }
-
-    double read_double(uint32_t address) {
-      union {
-          uint64_t i;
-          double d;
-      } u;
-      u.i = read_u64(address);
-      return u.d;
-    }
+uint32_t getRealPtr(uint32_t address) {
+  uint32_t masked = address & 0x7FFFFFFFu;
+  if (masked > 0x1800000) {
+    return 0;
+  }
+  return masked;
 }
+
+void dolphin_memcpy(void *dest, size_t offset, size_t size) {
+  if (size > 0x1800000) {
+    size = 0x1800000;
+  }
+
+  SIZE_T read = 0;
+  if (ReadProcessMemory(dolphinProcHandle, reinterpret_cast<void*>(emuRAMAddressStart + getRealPtr(address)), dest, 4, &read) == 0) {
+    cerr << "Failed to read memory from" << address << ". Error: " << GetLastError() << endl;
+  }
+  if (read != size) {
+    cerr << "Failed to read enough from " << hex << address << ". Read: " << read << " of " << size << dec << endl;
+  }
+}
+
+//namespace GameMemory {
+//    uint32_t getRealPtr(uint32_t address) {
+//      uint32_t masked = address & 0x7FFFFFFF;
+//      if (masked > 0x1800000) {
+//        return 0;
+//      }
+//      return masked;
+//    }
+//
+//    uint32_t read_u32(uint32_t address) {
+//      if (!emuRAMAddressStart)
+//        return 0;
+//
+//      uint32_t res = 0;
+//      SIZE_T read = 0;
+//      if (ReadProcessMemory(dolphinProcHandle, reinterpret_cast<void*>(emuRAMAddressStart + getRealPtr(address)), &res, 4, &read) == 0) {
+//        cerr << "Failed to read memory from" << address << ". Error: " << GetLastError() << endl;
+//        return 0;
+//      }
+//
+//      if (read != 4) {
+//        return 0;
+//      } else {
+//        return beToHost32(res);
+//      }
+//    }
+//
+//    uint64_t read_u64(uint32_t address) {
+//      if (!emuRAMAddressStart)
+//        return 0;
+//
+//      uint64_t res = 0;
+//      SIZE_T read = 0;
+//      if (ReadProcessMemory(dolphinProcHandle, reinterpret_cast<void*>(emuRAMAddressStart + getRealPtr(address)), &res, 8, &read) == 0) {
+//        cerr << "Failed to read memory from" << address << ". Error: " << GetLastError() << endl;
+//        return 0;
+//      }
+//
+//      if (read != 8) {
+//        return 0;
+//      } else {
+//        return beToHost64(res);
+//      }
+//    }
+//
+//    float read_float(uint32_t address) {
+//      union {
+//          uint32_t i;
+//          float f;
+//      } u;
+//      u.i = read_u32(address);
+//      return u.f;
+//    }
+//
+//    double read_double(uint32_t address) {
+//      union {
+//          uint64_t i;
+//          double d;
+//      } u;
+//      u.i = read_u64(address);
+//      return u.d;
+//    }
+//}
