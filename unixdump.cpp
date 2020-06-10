@@ -29,7 +29,7 @@ void findAndAttachProcess() {
   cout << "Opened shmem" << endl;
 
   size_t size = 0x2040000;
-  void *mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  void *mem = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (mem == MAP_FAILED) {
     cout << "failed to map shared memory" << endl;
     close(fd);
@@ -42,44 +42,17 @@ void findAndAttachProcess() {
 
 }
 
-namespace GameMemory {
-  uint32_t getRealPtr(uint32_t address) {
-    uint32_t masked = address & 0x7FFFFFFF;
-    if (masked > 0x1800000) {
-      return 0;
-    }
-    return masked;
+uint32_t getRealPtr(uint32_t address) {
+  uint32_t masked = address & 0x7FFFFFFFu;
+  if (masked > 0x1800000) {
+    return 0;
   }
+  return masked;
+}
 
-  uint32_t read_u32(uint32_t address) {
-    if (!emuRAMAddressStart) return 0;
-
-    uint32_t res = *reinterpret_cast<uint32_t *>(emuRAMAddressStart + getRealPtr(address));
-    return beToHost32(res);
+void dolphin_memcpy(void *dest, size_t offset, size_t size) {
+  if (size > 0x1800000) {
+    size = 0x1800000;
   }
-
-  uint64_t read_u64(uint32_t address) {
-    if (!emuRAMAddressStart)return 0;
-
-    uint64_t res = *reinterpret_cast<uint64_t *>(emuRAMAddressStart + getRealPtr(address));
-    return beToHost64(res);
-  }
-
-  float read_float(uint32_t address) {
-    union {
-      uint32_t i;
-      float f;
-    } u;
-    u.i = read_u32(address);
-    return u.f;
-  }
-
-  double read_double(uint32_t address) {
-    union {
-      uint64_t i;
-      double d;
-    } u;
-    u.i = read_u64(address);
-    return u.d;
-  }
+  memcpy(dest, emuRAMAddressStart + getRealPtr(offset), size);
 }

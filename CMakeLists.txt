@@ -4,15 +4,7 @@ set(NAME prime_watch_external)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_definitions(-DPRIME_DUMP_JSON=1)
-add_definitions(-DPW_USE_LOOPBACK)
-add_subdirectory(PrimeMemoryDumping)
-include_directories(PrimeMemoryDumping/common)
-include_directories(PrimeMemoryDumping/)
-
-set(SOURCE_FILES main.cpp common.cpp
-        PrimeMemoryDumping/prime1/Prime1JsonDumper.cpp
-        PrimeMemoryDumping/common/MemoryBuffer.cpp)
+set(SOURCE_FILES main.cpp common.cpp)
 
 if (WIN32 OR CYGWIN)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
